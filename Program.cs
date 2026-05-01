@@ -80,7 +80,6 @@ class Program
         Console.WriteLine("  abcdefghijklmnopqrstuvwxyz   ABC joke");
         Console.WriteLine("  qwertyuiop                   Keyboard mash joke");
         Console.WriteLine("  youareanidiot                Opposite day joke");
-        Console.WriteLine("  youarethebest                Opens The Handies channel");
         // commands for looks
         Line();
         Console.WriteLine("Looks:");
