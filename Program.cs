@@ -1,3 +1,4 @@
+#region Imports
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -11,13 +12,16 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Security.Cryptography;
 using System.Text;
+#endregion
 // Program
 class Program
 {
+    #region Functions
     static void Line()
     {
         Console.WriteLine();
     }
+    #region Help
     static void Help()
     {
         Console.WriteLine("Lash Terminal - Commands");
@@ -46,8 +50,8 @@ class Program
         Console.WriteLine("  time                         Shows time");
         Console.WriteLine("  uptime                       Shows system uptime");
         Console.WriteLine("  bootingtime                  Shows estimated boot time");
-        // file co
-        // mmands
+        Console.WriteLine("  weather.<city>               Shows weather");
+        // file commands
         Line();
         Console.WriteLine("Files / Paths:");
         Console.WriteLine("  cd <path>                    Changes directory");
@@ -80,6 +84,7 @@ class Program
         Console.WriteLine("  abcdefghijklmnopqrstuvwxyz   ABC joke");
         Console.WriteLine("  qwertyuiop                   Keyboard mash joke");
         Console.WriteLine("  youareanidiot                Opposite day joke");
+        Console.WriteLine("  beep <frequency> <duration>  Plays a beep");
         // commands for looks
         Line();
         Console.WriteLine("Looks:");
@@ -94,7 +99,17 @@ class Program
         Console.WriteLine("  binaryf <binary>              Converts binary to text");
         Console.WriteLine("  binarytc <text>               Converts text to binary and copies to clipboard");
         Console.WriteLine("  binaryfc <binary>             Converts binary to text and copies to clipboard");
+        // history commands
+        Line();
+        Console.WriteLine("History:");
+        Console.WriteLine("  hist                          Shows history");
+        Console.WriteLine("  clearhistory || clrhist       Clears history");
+        // math commands
+        Line();
+        Console.WriteLine("Math:");
+        Console.WriteLine("  math <method> <x> <y>         Performs math");
     }
+    #endregion
     static bool IsWindows() => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
     static bool IsLinux() => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
     static bool IsMacOS() => RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
@@ -223,8 +238,10 @@ class Program
             _ => ("unknown", "")
         };
     }
+    #endregion
     static void Main()
     {
+        #region Setup
         string user = Environment.UserName;
         Environment.CurrentDirectory = @$"C:\Users\{user}";
         var rand = new Random();
@@ -235,7 +252,9 @@ class Program
         Console.WriteLine($"Welcome, {user}");
         Line();
         Thread.Sleep(3000);
+        List<string> cmdHistory = new List<string>();
         bool pathHide = false;
+        #endregion
         while (true)
         {
             string path = Environment.CurrentDirectory;
@@ -246,7 +265,12 @@ class Program
             }
             Console.Write(cmdtext);
             string? cmd = Console.ReadLine();
+            if (!string.IsNullOrWhiteSpace(cmd))
+            {
+                cmdHistory.Add(cmd);
+            }
             // switch and cases
+            #region Commands
             switch (cmd)
             {
                 case null: case "": break;
@@ -284,6 +308,11 @@ class Program
                 }
                 case var s when s.StartsWith("out "):
                     string output = s.Substring(4).Trim().Trim('"');
+                    if (output.StartsWith("$env:"))
+                    {
+                        Console.WriteLine(Environment.GetEnvironmentVariable(output.Substring(5)));
+                        break;
+                    }
                     Console.WriteLine(output);
                     break;
                 case "ln":
@@ -768,8 +797,8 @@ Do not run random files unless you know what they are.");
                         null,
                         DataProtectionScope.CurrentUser
                     );
-                    string result = Convert.ToBase64String(encrypted);
-                    File.WriteAllText(filepath, result);
+                    string encryptedResult = Convert.ToBase64String(encrypted);
+                    File.WriteAllText(filepath, encryptedResult);
                     Console.WriteLine("Encrypted file:");
                     Console.WriteLine(filepath);
                     break;
@@ -823,14 +852,14 @@ Do not run random files unless you know what they are.");
                     {
                         string text = s.Substring(8);
 
-                        string result = "";
+                        string binaryResult = "";
 
                         foreach (char c in text)
                         {
                             string binary = Convert.ToString(c, 2).PadLeft(8, '0');
-                            result += binary;
+                            binaryResult += binary;
                         }
-                        Console.WriteLine(result);
+                        Console.WriteLine(binaryResult);
                         break;
                     }
                 case var s when s.StartsWith("binaryf "):
@@ -852,32 +881,32 @@ Do not run random files unless you know what they are.");
                             Console.WriteLine("Is not binary");
                             break;
                         }
-                        string result = "";
+                        string fromBinaryResult = "";
                         for (int i = 0; i < bin.Length; i += 8)
                         {
                             string chunk = bin.Substring(i, 8);
                             int value = Convert.ToInt32(chunk, 2);
-                            result += (char)value;
+                            fromBinaryResult += (char)value;
                         }
-                        Console.WriteLine(result);
+                        Console.WriteLine(fromBinaryResult);
                         break;
                     }
                 case var s when s.StartsWith("binarytc "):
                     {
                         string text = s.Substring(9);
 
-                        string result = "";
+                        string toBinaryAndCopyResult = "";
 
                         foreach (char c in text)
                         {
                             string binary = Convert.ToString(c, 2).PadLeft(8, '0');
-                            result += binary;
+                            toBinaryAndCopyResult += binary;
                         }
-                        Console.WriteLine(result);
+                        Console.WriteLine(toBinaryAndCopyResult);
                         Process.Start(new ProcessStartInfo
                         {
                             FileName = "powershell",
-                            Arguments = $"-NoProfile -Command \"Set-Clipboard -Value '{result}'\"",
+                            Arguments = $"-NoProfile -Command \"Set-Clipboard -Value '{toBinaryAndCopyResult}'\"",
                             UseShellExecute = false,
                             CreateNoWindow = true
                         });
@@ -902,15 +931,15 @@ Do not run random files unless you know what they are.");
                             Console.WriteLine("Is not binary");
                             break;
                         }
-                        string result = "";
+                        string fromBinaryAndCopyResult = "";
                         for (int i = 0; i < bin.Length; i += 8)
                         {
                             string chunk = bin.Substring(i, 8);
                             int value = Convert.ToInt32(chunk, 2);
-                            result += (char)value;
+                            fromBinaryAndCopyResult += (char)value;
                         }
-                        Console.WriteLine(result);
-                        string copy = result.Replace("'", "''");
+                        Console.WriteLine(fromBinaryAndCopyResult);
+                        string copy = fromBinaryAndCopyResult.Replace("'", "''");
                         Process.Start(new ProcessStartInfo
                         {
                             FileName = "powershell",
@@ -920,11 +949,87 @@ Do not run random files unless you know what they are.");
                         });
                         break;
                     }
+                case "hist":
+                    Console.WriteLine("History:");
+                    foreach (string h in cmdHistory) Console.WriteLine(h);
+                    break;
+                case "clearhistory":
+                case "clrhist":
+                    cmdHistory.Clear();
+                    break;
+                case var s when s.StartsWith("beep "):
+                    string[] sirenArgs = s.Split(' ');
+                    if (!IsWindows())
+                    {
+                        Console.WriteLine("This command is only supported on Windows");
+                        break;
+                    }
+                    #pragma warning disable CA1416
+                    Console.Beep(sirenArgs.Length > 1 ? int.Parse(sirenArgs[1]) : 500, sirenArgs.Length > 2 ? int.Parse(sirenArgs[2]) : 100);
+                    #pragma warning restore CA1416
+                    break;
+                case var s when s.StartsWith("math "):
+                    string[] mathArgs = s.Split(' ');    
+                    if (mathArgs.Length != 4)
+                    {
+                        Console.WriteLine("math must have a math method, x, y, and the math method (+, -, *, / or %)");
+                        break;
+                    }
+                    if (!int.TryParse(mathArgs[2], out int x) || !int.TryParse(mathArgs[3], out int y))
+                    {
+                        Console.WriteLine("x and y must be integers.");
+                        break;
+                    }
+                    string mathresult = mathArgs[1] switch
+                    {
+                        "+" => (x + y).ToString(),
+                        "-" => (x - y).ToString(),
+                        "*" => (x * y).ToString(),
+                        "/" => y == 0 ? "Do not divide by zero" : (x / y).ToString(),
+                        "%" => y == 0 ? "Do not modulo by zero" : (x % y).ToString(),
+                        _   => "Invalid math method"
+                    };
+                    Console.WriteLine($"Result: {mathresult.ToString()}");
+                    break;
+                case "01001001001000000110100001100001011101000110010100100000011110010110111101110101001000000110000101101110011001000010000001101100011000010111001101101000":
+                    Console.WriteLine(@"0100100100100000
+0110100001100001
+0111010001100101
+0010000001111001
+0110111101110101
+0010000001100001
+0110111001100100
+0010000001111001
+0110111101110101
+0111001000100000
+0110011001100001
+0110110101101001
+0110110001111001
+0010000001111001
+0110111101110101
+0010000001101001
+0110010001101001
+0110111101100100
+0110100101100011
+0010000001101001
+0110111001100011
+0110010101101100");
+                    break;
+                case var c when c.StartsWith("weather."):
+                    Console.WriteLine("Weather:");
+                    string city = c.Substring(7).Trim();
+                    HttpClient client = new HttpClient();
+                    string weatherResult = client.GetStringAsync($"https://wttr.in/{city}?format=3").Result;
+                    Console.WriteLine(weatherResult);
+                    break;
+                // * end of commands
                 default:
                     string[] comd = cmd.Split(" ");
                     string cmdname = comd[0];
                     Console.WriteLine($"{cmdname} : The command {cmdname} is an invalid command, Please enter a valid command");
                     break;
+                // * end of switch
+                #endregion
             }
         }
     }
